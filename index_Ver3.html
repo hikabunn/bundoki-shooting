@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ぶんどきシューティング Ver3</title>
+<style>
+body{margin:0;background:#111;color:#fff;font-family:sans-serif;text-align:center}
+canvas{background:#000;border:2px solid #666;touch-action:none}
+button{padding:10px 20px;font-size:18px;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>ぶんどきシューティング Ver3 ❤️</h1>
+<div>ライフ: <span id="life">3</span>　スコア: <span id="score">0</span></div>
+<canvas id="c" width="360" height="600"></canvas><br>
+<button id="restart" style="display:none">もう一度遊ぶ</button>
+<script>
+const cv=c=document.getElementById("c"),x=cv.getContext("2d");
+let p={x:180,y:560},bul=[],ene=[],exp=[],life=3,score=0,over=false;
+function reset(){life=3;score=0;over=false;bul=[];ene=[];exp=[];p.x=180;
+document.getElementById("life").textContent=life;
+document.getElementById("score").textContent=score;
+restart.style.display="none";}
+reset();
+cv.addEventListener("pointermove",e=>{
+ const r=cv.getBoundingClientRect();
+ p.x=(e.clientX-r.left)*(cv.width/r.width);
+});
+setInterval(()=>{if(!over)bul.push({x:p.x,y:p.y});},180);
+setInterval(()=>{if(!over)ene.push({x:20+Math.random()*320,y:-20});},700);
+restart.onclick=reset;
+function boom(x0,y0){
+ for(let i=0;i<15;i++)exp.push({x:x0,y:y0,vx:(Math.random()-0.5)*4,vy:(Math.random()-0.5)*4,t:30});
+}
+function loop(){
+ x.clearRect(0,0,360,600);
+ bul.forEach(b=>b.y-=8);
+ ene.forEach(e=>e.y+=3);
+ exp.forEach(e=>{e.x+=e.vx;e.y+=e.vy;e.t--;});
+ bul=bul.filter(b=>b.y>-10);
+ exp=exp.filter(e=>e.t>0);
+ for(let i=ene.length-1;i>=0;i--){
+   let e=ene[i];
+   let hit=false;
+   for(let j=bul.length-1;j>=0;j--){
+      let b=bul[j];
+      if((b.x-e.x)**2+(b.y-e.y)**2<400){
+        boom(e.x,e.y);
+        ene.splice(i,1);bul.splice(j,1);
+        score+=100;document.getElementById("score").textContent=score;
+        hit=true;break;
+      }
+   }
+   if(hit)continue;
+   if((p.x-e.x)**2+(p.y-e.y)**2<900){
+      boom(e.x,e.y);
+      ene.splice(i,1);
+      life--;
+      document.getElementById("life").textContent=life;
+      if(life<=0){over=true;restart.style.display="inline-block";}
+   }
+ }
+ x.fillStyle="cyan";
+ x.beginPath();
+ x.moveTo(p.x,p.y-20);x.lineTo(p.x-15,p.y+20);x.lineTo(p.x+15,p.y+20);x.fill();
+ x.fillStyle="yellow";
+ bul.forEach(b=>x.fillRect(b.x-2,b.y-8,4,12));
+ x.fillStyle="red";
+ ene.forEach(e=>{x.beginPath();x.arc(e.x,e.y,15,0,Math.PI*2);x.fill();});
+ x.fillStyle="orange";
+ exp.forEach(e=>{x.globalAlpha=e.t/30;x.beginPath();x.arc(e.x,e.y,3,0,Math.PI*2);x.fill();x.globalAlpha=1;});
+ if(over){
+   x.fillStyle="white";
+   x.font="40px sans-serif";
+   x.fillText("GAME OVER",55,280);
+ }
+ requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
